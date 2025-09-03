@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solana Web3.js Example</title>
+
+    <!-- Development (un-minified) -->
+    <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.js"></script>
+
+    <!-- Production (minified) -->
+    <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
+</head>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+        padding: 20px;
+        background-color: #f4f4f4;
+    }
+
+    h1 {
+        color: #333;
+    }
+
+    p {
+        line-height: 1.6;
+        color: #000;
+        font-size: x-large;
+    }
+</style>
+
+<body>
+    <!-- <h1>Solana Web3.js Example</h1> -->
+
+    <script>
+        // Example usage of Solana Web3.js
+        const { Connection, clusterApiUrl, PublicKey } = solanaWeb3;
+
+        // Connect to the Devnet cluster
+        const connection = new Connection(clusterApiUrl('devnet'), 'confirmed');
+
+        // Example public key (replace with a valid one)
+        const publicKey = new PublicKey('Enter_Your_Public_Key_Here');
+
+        // Fetch and log the account balance
+        connection.getBalance(publicKey).then(balance => {
+            console.log(`Balance: ${balance} lamports`);
+        }).catch(err => {
+            console.error('Error fetching balance:', err);
+        });
+    </script>
+</body>
+
+</html>
