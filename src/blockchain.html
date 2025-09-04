@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Blockchain dApp</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+        }
+
+        h2 {
+            color: #444;
+        }
+
+        form {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+
+        input,
+        button {
+            padding: 10px;
+            margin: 5px;
+        }
+
+        button {
+            cursor: pointer;
+        }
+
+        #result {
+            margin-top: 20px;
+            padding: 10px;
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Ethereum dApp</h1>
+
+    <!-- Balance Form -->
+    <form id="balanceForm">
+        <h2>Fetch Balance</h2>
+        <input type="text" id="balanceAddress" placeholder="Enter ETH Address" required />
+        <button type="submit">Get Balance</button>
+    </form>
+
+    <!-- Send ETH Form -->
+    <form id="sendForm">
+        <h2>Send ETH</h2>
+        <input type="text" id="sendTo" placeholder="Receiver Address" required />
+        <input type="text" id="sendAmount" placeholder="Amount in ETH" required />
+        <button type="submit">Send</button>
+    </form>
+
+    <!-- Results -->
+    <div id="result"></div>
+
+    <script>
+        const apiUrl = 'http://localhost:4000';
+
+        // Fetch Balance
+        document.getElementById('balanceForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const address = document.getElementById('balanceAddress').value;
+            const res = await fetch(`${apiUrl}/balance/${address}`);
+            const data = await res.json();
+            document.getElementById('result').innerHTML =
+                `<h3>Balance</h3><p>${data.address}: ${data.balance} ETH</p>`;
+        });
+
+        // Send ETH
+        document.getElementById('sendForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const to = document.getElementById('sendTo').value;
+            const amount = document.getElementById('sendAmount').value;
+            const res = await fetch(`${apiUrl}/send`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ to, amount })
+            });
+            const data = await res.json();
+            if (data.error) {
+                document.getElementById('result').innerHTML = `<p style="color:red">Error: ${data.error}</p>`;
+            } else {
+                document.getElementById('result').innerHTML =
+                    `<h3>Transaction Sent!</h3><p>Tx Hash: <a href="${data.explorer}" target="_blank">${data.txHash}</a></p>`;
+            }
+        });
+    </script>
+</body>
+
+</html>

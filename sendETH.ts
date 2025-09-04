@@ -21,10 +21,37 @@ if (!senderAddress || !receiverAddress || !privateKey) {
 // Amount to send in ETH
 const amountInEth = '0.0001';
 
+// Check current gas price
+async function checkGasPrice() {
+    const gasPrice = await web3.eth.getGasPrice(); // returns bigint (Wei)
+    console.log('Current Gas Price (Wei):', gasPrice.toString());
+    console.log('Gas Price in Gwei:', web3.utils.fromWei(gasPrice.toString(), 'gwei'), 'gwei');
+}
+
+// checkGasPrice();
+
+async function estimateGas() {
+    const tx = {
+        from: senderAddress,
+        to: receiverAddress,
+        value: web3.utils.toWei(amountInEth, 'ether'),
+    };
+
+    const gasEstimate = await web3.eth.estimateGas(tx);
+    console.log('Estimated Gas:', gasEstimate);
+}
+
+// estimateGas();
+
+
 async function sendETH() {
     try {
         // Get nonce
         const nonce: bigint = await web3.eth.getTransactionCount(senderAddress, 'latest');
+        const latestBlock = await web3.eth.getBlock('latest');
+        const baseFee = latestBlock.baseFeePerGas!;
+        const maxPriorityFeePerGas = web3.utils.toWei('2', 'gwei'); // Tip for miners
+        const maxFeePerGas = (BigInt(baseFee) + BigInt(maxPriorityFeePerGas)).toString();
 
         // Build transaction
         const tx = {
@@ -33,6 +60,8 @@ async function sendETH() {
             value: web3.utils.toWei(amountInEth, 'ether'),
             gas: 21000,
             nonce: nonce,
+            maxPriorityFeePerGas: maxPriorityFeePerGas,
+            maxFeePerGas: maxFeePerGas,
         };
 
         // Sign transaction
@@ -42,9 +71,9 @@ async function sendETH() {
 
         // Send signed transaction
         const receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
+        const transaction = await web3.eth.getTransaction(receipt.transactionHash);
 
-        console.log('Transaction successful!');
-        console.log(`TX Hash: ${receipt.transactionHash}`);
+        console.log('Transaction:', transaction);
     } catch (error) {
         console.error('Error sending ETH:', error);
     }
