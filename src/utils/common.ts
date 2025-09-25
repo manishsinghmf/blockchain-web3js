@@ -17,26 +17,6 @@ export async function getBalance(address: string): Promise<string> {
 }
 
 /**
- * Get current gas price (legacy type-0 style, not used in new transactions)
- */
-export async function getGasPrice(): Promise<string> {
-    const gasPrice = await web3.eth.getGasPrice();
-    return web3.utils.fromWei(gasPrice, 'gwei');
-}
-
-/**
- * Estimate gas for a transaction
- */
-export async function estimateGas(to: string, valueEth: string): Promise<bigint> {
-    const tx = {
-        from: senderAddress,
-        to,
-        value: web3.utils.toWei(valueEth, 'ether'),
-    };
-    return await web3.eth.estimateGas(tx);
-}
-
-/**
  * Send ETH using EIP-1559
  */
 export async function sendEth(to: string, amountEth: string): Promise<string> {

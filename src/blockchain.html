@@ -43,18 +43,33 @@
 <body>
     <h1>Ethereum dApp</h1>
 
-    <!-- Balance Form -->
-    <form id="balanceForm">
-        <h2>Fetch Balance</h2>
-        <input type="text" id="balanceAddress" placeholder="Enter ETH Address" required />
+    <!-- Balance (Web3.js) -->
+    <form id="balanceWeb3Form">
+        <h2>Fetch Balance (Web3.js)</h2>
+        <input type="text" id="balanceWeb3Address" placeholder="Enter ETH Address" required />
         <button type="submit">Get Balance</button>
     </form>
 
-    <!-- Send ETH Form -->
-    <form id="sendForm">
-        <h2>Send ETH</h2>
-        <input type="text" id="sendTo" placeholder="Receiver Address" required />
-        <input type="text" id="sendAmount" placeholder="Amount in ETH" required />
+    <!-- Balance (Ethers.js) -->
+    <form id="balanceEthersForm">
+        <h2>Fetch Balance (Ethers.js)</h2>
+        <input type="text" id="balanceEthersAddress" placeholder="Enter ETH Address" required />
+        <button type="submit">Get Balance</button>
+    </form>
+
+    <!-- Send ETH (Web3.js) -->
+    <form id="sendWeb3Form">
+        <h2>Send ETH (Web3.js)</h2>
+        <input type="text" id="sendWeb3To" placeholder="Receiver Address" required />
+        <input type="text" id="sendWeb3Amount" placeholder="Amount in ETH" required />
+        <button type="submit">Send</button>
+    </form>
+
+    <!-- Send ETH (Ethers.js) -->
+    <form id="sendEthersForm">
+        <h2>Send ETH (Ethers.js)</h2>
+        <input type="text" id="sendEthersTo" placeholder="Receiver Address" required />
+        <input type="text" id="sendEthersAmount" placeholder="Amount in ETH" required />
         <button type="submit">Send</button>
     </form>
 
@@ -64,32 +79,105 @@
     <script>
         const apiUrl = 'http://localhost:4000';
 
-        // Fetch Balance
-        document.getElementById('balanceForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const address = document.getElementById('balanceAddress').value;
-            const res = await fetch(`${apiUrl}/balance/${address}`);
-            const data = await res.json();
+        const setResult = (msg, error = false) => {
             document.getElementById('result').innerHTML =
-                `<h3>Balance</h3><p>${data.address}: ${data.balance} ETH</p>`;
+                `<p style="color:${error ? 'red' : 'green'}">${msg}</p>`;
+        };
+
+        // Balance (Web3.js)
+        document.getElementById('balanceWeb3Form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const address = document.getElementById('balanceWeb3Address').value;
+            const res = await fetch(`${apiUrl}/web3/balance/${address}`);
+            const data = await res.json();
+            if (data.error) setResult(data.error, true);
+            else setResult(`[Web3.js] Balance of ${data.address}: ${data.balance} ETH`);
         });
 
-        // Send ETH
-        document.getElementById('sendForm').addEventListener('submit', async (e) => {
+        // Balance (Ethers.js)
+        document.getElementById('balanceEthersForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const to = document.getElementById('sendTo').value;
-            const amount = document.getElementById('sendAmount').value;
-            const res = await fetch(`${apiUrl}/send`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ to, amount })
-            });
+            const address = document.getElementById('balanceEthersAddress').value;
+            const res = await fetch(`${apiUrl}/ethers/balance/${address}`);
             const data = await res.json();
-            if (data.error) {
-                document.getElementById('result').innerHTML = `<p style="color:red">Error: ${data.error}</p>`;
-            } else {
-                document.getElementById('result').innerHTML =
-                    `<h3>Transaction Sent!</h3><p>Tx Hash: <a href="${data.explorer}" target="_blank">${data.txHash}</a></p>`;
+            if (data.error) setResult(data.error, true);
+            else setResult(`[Ethers.js] Balance of ${data.address}: ${data.balance} ETH`);
+        });
+
+        // Send ETH (Web3.js)
+        document.getElementById('sendWeb3Form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const to = document.getElementById('sendWeb3To').value;
+            const amount = document.getElementById('sendWeb3Amount').value;
+            try {
+                const res = await fetch(`${apiUrl}/web3/send`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ to, amount })
+                });
+
+                const data = await res.json();
+
+                if (data.error) {
+                    setResult(data.error, true);
+                } else {
+                    const details = data.details;
+                    setResult(`
+                    <h3>[Web3.js] Transaction Sent!</h3>
+                    <p><b>Hash:</b> <a href="${data.explorer}" target="_blank">${data.txHash}</a></p>
+                    <p><b>From:</b> ${details.from}</p>
+                    <p><b>To:</b> ${details.to}</p>
+                    <p><b>Value:</b> ${details.valueEth} ETH</p>
+                    <p><b>Status:</b> ${details.status}</p>
+                    <p><b>Block:</b> ${details.blockNumber}</p>
+                    <p><b>Confirmations:</b> ${details.confirmations}</p>
+                    <p><b>Gas Used:</b> ${details.gasUsed}</p>
+                    <p><b>Gas Price:</b> ${details.gasPriceGwei} Gwei</p>
+                    <p><b>Total Fee:</b> ${details.totalFeeEth} ETH</p>
+                    <p><b>Timestamp:</b> ${details.timestamp}</p>
+                `);
+                }
+            } catch (err) {
+                setResult("Failed to send ETH: " + err.message, true);
+            }
+        });
+
+        // Send ETH (Ethers.js)
+        document.getElementById('sendEthersForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const to = document.getElementById('sendEthersTo').value;
+            const amount = document.getElementById('sendEthersAmount').value;
+
+            try {
+                const res = await fetch(`${apiUrl}/ethers/send`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ to, amount })
+                });
+
+                const data = await res.json();
+
+                if (data.error) {
+                    setResult(data.error, true);
+                } else {
+                    const details = data.details;
+                    setResult(`
+                    <h3>[Ethers.js] Transaction Sent!</h3>
+                    <p><b>Hash:</b> <a href="${data.explorer}" target="_blank">${data.txHash}</a></p>
+                    <p><b>From:</b> ${details.from}</p>
+                    <p><b>To:</b> ${details.to}</p>
+                    <p><b>Value:</b> ${details.valueEth} ETH</p>
+                    <p><b>Status:</b> ${details.status}</p>
+                    <p><b>Block:</b> ${details.blockNumber}</p>
+                    <p><b>Confirmations:</b> ${details.confirmations}</p>
+                    <p><b>Gas Used:</b> ${details.gasUsed}</p>
+                    <p><b>Gas Price:</b> ${details.gasPriceGwei} Gwei</p>
+                    <p><b>Total Fee:</b> ${details.totalFeeEth} ETH</p>
+                    <p><b>Timestamp:</b> ${details.timestamp}</p>
+                `);
+                }
+            } catch (err) {
+                setResult("Failed to send ETH: " + err.message, true);
             }
         });
     </script>
